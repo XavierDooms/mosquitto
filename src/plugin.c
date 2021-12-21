@@ -180,10 +180,19 @@ void plugin__handle_tick(void)
 	struct mosquitto_evt_tick event_data;
 	struct mosquitto__callback *cb_base;
 	struct mosquitto__security_options *opts;
+	int i;
 
 	/* FIXME - set now_s and now_ns to avoid need for multiple time lookups */
 	if(db.config->per_listener_settings){
-		/* FIXME - iterate over all listeners */
+		for(i=0; i < db.config->listener_count; i++) {
+			opts = &db.config->listeners[i].security_options;
+			memset(&event_data, 0, sizeof(event_data));
+
+			DL_FOREACH(opts->plugin_callbacks.tick, cb_base){
+				cb_base->cb(MOSQ_EVT_TICK, &event_data, cb_base->userdata);
+			}
+		}
+
 	}else{
 		opts = &db.config->security_options;
 		memset(&event_data, 0, sizeof(event_data));
